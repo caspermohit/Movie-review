@@ -346,6 +346,17 @@ export const getReviews = async (type: string, movieId: number): Promise<ReviewR
     const response = await backendApi.get<ReviewResponse[]>(`/reviews/${type}/${movieId}`);
     return response.data;
   } catch (error) {
+    console.error('Error getting reviews:', error);
+    
+    // If the endpoint is not found (404), return an empty array instead of throwing
+    if (error && typeof error === 'object' && 'isAxiosError' in error) {
+      const axiosError = error as any;
+      if (axiosError.response?.status === 404) {
+        console.warn('Reviews endpoint not found, returning empty array');
+        return [];
+      }
+    }
+    
     return handleError(error);
   }
 };
@@ -399,6 +410,17 @@ export const getWishlist = async (): Promise<WishlistResponse[]> => {
     const response = await backendApi.get<WishlistResponse[]>('/wishlist');
     return response.data;
   } catch (error) {
+    console.error('Error getting wishlist:', error);
+    
+    // If the endpoint is not found (404), return an empty array
+    if (error && typeof error === 'object' && 'isAxiosError' in error) {
+      const axiosError = error as any;
+      if (axiosError.response?.status === 404) {
+        console.warn('Wishlist endpoint not found, returning empty array');
+        return [];
+      }
+    }
+    
     return handleError(error);
   }
 };

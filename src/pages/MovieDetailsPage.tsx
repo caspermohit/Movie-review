@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
   Box,
   Container,
@@ -28,6 +29,51 @@ import { ArrowBackIcon, DeleteIcon, AddIcon } from '@chakra-ui/icons';
 import { MovieDetails as MovieDetailsType } from '../types/movie';
 import MovieCard from '../components/MovieCard';
 import * as movieService from '../services/movieService';
+
+// Define API response types
+interface TmdbDetailsResponse {
+  id: number;
+  title?: string;
+  name?: string;
+  overview: string;
+  poster_path: string;
+  backdrop_path: string;
+  vote_average: number;
+  release_date?: string;
+  first_air_date?: string;
+  genres: Array<{ id: number; name: string }>;
+  runtime?: number;
+  status: string;
+}
+
+interface TmdbVideosResponse {
+  results: Array<{
+    key: string;
+    site: string;
+    type: string;
+    name: string;
+  }>;
+}
+
+interface TmdbCreditsResponse {
+  cast: Array<{
+    id: number;
+    name: string;
+    character: string;
+    profile_path: string | null;
+  }>;
+}
+
+interface TmdbSimilarResponse {
+  results: Array<{
+    id: number;
+    title: string;
+    overview: string;
+    poster_path: string;
+    vote_average: number;
+    release_date: string;
+  }>;
+}
 
 const MovieDetailsPage = () => {
   const { id, type: routeType = 'movie' } = useParams<{ id: string; type: string }>();
@@ -60,14 +106,80 @@ const MovieDetailsPage = () => {
         setIsLoading(true);
         setError(null);
         console.log('Fetching details for:', { id, type });
-        const data = await movieService.fetchMovieDetails(
-          parseInt(id),
-          type as 'movie' | 'tv' | 'anime'
-        );
-        console.log('Received movie details:', data);
-        setDetails(data);
-        if (data.videos && data.videos.length > 0) {
-          setSelectedVideo(data.videos[0].key);
+        
+        try {
+          const data = await movieService.fetchMovieDetails(
+            parseInt(id),
+            type as 'movie' | 'tv' | 'anime'
+          );
+          console.log('Received movie details:', data);
+          setDetails(data);
+          if (data.videos && data.videos.length > 0) {
+            setSelectedVideo(data.videos[0].key);
+          }
+        } catch (reviewError) {
+          // If there's an error specifically with reviews, we'll still try to get the main movie data
+          console.error('Error with reviews data:', reviewError);
+          
+          // For TMDB data, we can still show the movie without reviews
+          if (type === 'movie' || type === 'tv') {
+            try {
+              const endpoints = {
+                movie: {
+                  details: `${import.meta.env.VITE_API_BASE_URL}/movie/${id}`,
+                  videos: `${import.meta.env.VITE_API_BASE_URL}/movie/${id}/videos`,
+                  credits: `${import.meta.env.VITE_API_BASE_URL}/movie/${id}/credits`,
+                  similar: `${import.meta.env.VITE_API_BASE_URL}/movie/${id}/similar`
+                },
+                tv: {
+                  details: `${import.meta.env.VITE_API_BASE_URL}/tv/${id}`,
+                  videos: `${import.meta.env.VITE_API_BASE_URL}/tv/${id}/videos`,
+                  credits: `${import.meta.env.VITE_API_BASE_URL}/tv/${id}/credits`,
+                  similar: `${import.meta.env.VITE_API_BASE_URL}/tv/${id}/similar`
+                }
+              };
+              
+              const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+              const currentEndpoints = endpoints[type as 'movie' | 'tv'];
+              
+              const [details, videos, credits, similar] = await Promise.all([
+                axios.get<TmdbDetailsResponse>(`${currentEndpoints.details}?api_key=${TMDB_API_KEY}&language=en-US`),
+                axios.get<TmdbVideosResponse>(`${currentEndpoints.videos}?api_key=${TMDB_API_KEY}&language=en-US`),
+                axios.get<TmdbCreditsResponse>(`${currentEndpoints.credits}?api_key=${TMDB_API_KEY}&language=en-US`),
+                axios.get<TmdbSimilarResponse>(`${currentEndpoints.similar}?api_key=${TMDB_API_KEY}&language=en-US&page=1`)
+              ]);
+              
+              const detailsData = details.data;
+              const videosData = videos.data;
+              const creditsData = credits.data;
+              const similarData = similar.data;
+              
+              // For TV shows, map name to title for consistency
+              const title = type === 'tv' ? detailsData.name : detailsData.title;
+              const release_date = type === 'tv' ? detailsData.first_air_date : detailsData.release_date;
+              
+              setDetails({
+                ...detailsData,
+                title: title || '',
+                release_date: release_date || '',
+                runtime: detailsData.runtime?.toString() || 'Unknown',
+                videos: videosData.results,
+                cast: creditsData.cast.slice(0, 10),
+                recommendations: similarData.results.slice(0, 4),
+                reviews: [], // Empty reviews array when backend fails
+              });
+              
+              if (videosData.results && videosData.results.length > 0) {
+                setSelectedVideo(videosData.results[0].key);
+              }
+              
+            } catch (fallbackError) {
+              console.error('Error fetching fallback movie data:', fallbackError);
+              throw fallbackError; // Re-throw to trigger the outer catch
+            }
+          } else {
+            throw reviewError; // Re-throw for anime or other types
+          }
         }
       } catch (error) {
         console.error('Error fetching details:', error);
