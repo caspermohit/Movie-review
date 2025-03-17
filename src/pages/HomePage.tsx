@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
-  Grid,
   Input,
   Box,
   Button,
@@ -26,11 +25,10 @@ const HomePage = () => {
   const [movies, setMovies] = useState<MovieResponse | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [activeSection, setActiveSection] = useState<ContentType>('movies');
   const [activeCategory, setActiveCategory] = useState<Category>('popular');
-  const [latestMovies, setLatestMovies] = useState<MovieResponse | null>(null);
 
   const bgColor = useColorModeValue('gray.50', 'gray.900');
   const footerBg = useColorModeValue('white', 'gray.800');
@@ -148,7 +146,6 @@ const HomePage = () => {
       
       if (response) {
         setMovies(response);
-        setTotalPages(response.total_pages);
       }
     } catch (error) {
       console.error('Error fetching content:', error);
@@ -168,9 +165,16 @@ const HomePage = () => {
   };
 
   const loadMore = () => {
+    setIsLoadingMore(true);
     const nextPage = page + 1;
     setPage(nextPage);
   };
+
+  useEffect(() => {
+    if (isLoadingMore) {
+      setIsLoadingMore(false);
+    }
+  }, [movies]);
 
   const handleSectionChange = (section: ContentType) => {
     setActiveSection(section);
@@ -271,7 +275,7 @@ const HomePage = () => {
               {movies.page < movies.total_pages && (
                 <Button
                   onClick={loadMore}
-                  isLoading={isLoading}
+                  isLoading={isLoadingMore}
                   loadingText="Loading more..."
                   variant="outline"
                   colorScheme="blue"

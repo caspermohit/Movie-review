@@ -1,13 +1,21 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = import.meta.env.VITE_MONGODB_URI || 'mongodb://localhost:27017/movie-review';
-
-export const connectDB = async () => {
+const connectDB = async () => {
   try {
-    await mongoose.connect(MONGODB_URI);
-    console.log('MongoDB connected successfully');
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
+    const mongoURI = import.meta.env.VITE_MONGODB_URI;
+    
+    if (!mongoURI) {
+      console.error('MongoDB URI is not defined in environment variables');
+      throw new Error('MongoDB URI is required');
+    }
+
+    await mongoose.connect(mongoURI);
+    console.log('MongoDB Connected...');
+  } catch (err) {
+    console.error('Error connecting to MongoDB:', err);
+    // Instead of using process.exit, throw an error that can be handled by the caller
+    throw new Error('Failed to connect to MongoDB');
   }
-}; 
+};
+
+export default connectDB; 

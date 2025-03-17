@@ -1,6 +1,83 @@
 import axios from 'axios';
-import type { AxiosError } from 'axios';
-import { MovieResponse, Movie, MovieDetails } from '../types/movie';
+import { MovieResponse, MovieDetails } from '../types/movie';
+
+// Type definitions
+interface JikanAnimeResponse {
+  data: {
+    mal_id: number;
+    title: string;
+    synopsis: string;
+    images: {
+      jpg: {
+        image_url: string;
+        large_image_url: string;
+      };
+    };
+    score: number;
+    aired: {
+      from: string;
+    };
+    genres: Array<{
+      mal_id: number;
+      name: string;
+    }>;
+    duration: string;
+    status: string;
+    trailer: {
+      youtube_id: string;
+    };
+  };
+}
+
+interface TMDBDetailsResponse {
+  id: number;
+  title?: string;
+  name?: string;
+  overview: string;
+  poster_path: string;
+  backdrop_path: string;
+  vote_average: number;
+  release_date?: string;
+  first_air_date?: string;
+  genres: Array<{ id: number; name: string }>;
+  runtime?: number;
+  episode_run_time?: number[];
+  status: string;
+}
+
+interface TMDBVideosResponse {
+  results: Array<{
+    key: string;
+    site: string;
+    type: string;
+    name: string;
+  }>;
+}
+
+interface TMDBCreditsResponse {
+  cast: Array<{
+    id: number;
+    name: string;
+    character: string;
+    profile_path: string | null;
+  }>;
+  crew: Array<{
+    id: number;
+    name: string;
+    job: string;
+  }>;
+}
+
+interface TMDBSimilarResponse {
+  results: Array<{
+    id: number;
+    title: string;
+    overview: string;
+    poster_path: string;
+    vote_average: number;
+    release_date: string;
+  }>;
+}
 
 // Load environment variables
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -35,7 +112,7 @@ const backendApi = axios.create({
 backendApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -48,7 +125,7 @@ backendApi.interceptors.request.use(
 // Add response interceptor for error handling
 backendApi.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  (error) => {
     if (error.response?.status === 401) {
       // Handle unauthorized access
       localStorage.removeItem('token');
@@ -61,8 +138,8 @@ backendApi.interceptors.response.use(
 
 // Error handling helper
 const handleError = (error: unknown): never => {
-  if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError;
+  if (error && typeof error === 'object' && 'isAxiosError' in error) {
+    const axiosError = error as any;
     console.error('API Error:', {
       status: axiosError.response?.status,
       statusText: axiosError.response?.statusText,

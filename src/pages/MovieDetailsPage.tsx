@@ -14,10 +14,8 @@ import {
   SimpleGrid,
   useColorModeValue,
   AspectRatio,
-  Flex,
   FormControl,
   FormLabel,
-  Input,
   Textarea,
   Select,
   useToast,
@@ -26,8 +24,8 @@ import {
   Avatar,
   IconButton,
 } from '@chakra-ui/react';
-import { ArrowBackIcon, StarIcon, DeleteIcon, AddIcon } from '@chakra-ui/icons';
-import { MovieDetails as MovieDetailsType, Review } from '../types/movie';
+import { ArrowBackIcon, DeleteIcon, AddIcon } from '@chakra-ui/icons';
+import { MovieDetails as MovieDetailsType } from '../types/movie';
 import MovieCard from '../components/MovieCard';
 import * as movieService from '../services/movieService';
 
