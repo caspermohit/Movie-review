@@ -102,7 +102,7 @@ if (!BACKEND_API_URL) {
 // Configure axios defaults for the backend
 const backendApi = axios.create({
   baseURL: BACKEND_API_URL,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   }
@@ -126,12 +126,20 @@ backendApi.interceptors.request.use(
 backendApi.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Handle timeouts gracefully
+    if (error.code === 'ECONNABORTED') {
+      console.error('Request timed out:', error);
+      return Promise.reject(new Error('Request timed out. Please try again later.'));
+    }
+    
+    // Handle unauthorized access
     if (error.response?.status === 401) {
-      // Handle unauthorized access
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      console.warn('Authentication required. Redirecting to login page.');
+      return Promise.reject(new Error('Authentication required'));
     }
+    
     return Promise.reject(error);
   }
 );

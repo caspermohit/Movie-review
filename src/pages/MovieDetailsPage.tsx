@@ -118,6 +118,17 @@ const MovieDetailsPage = () => {
     checkWishlistStatus();
   }, [id, type, toast]);
 
+  const handleAuthError = (action: string) => {
+    toast({
+      title: 'Authentication Required',
+      description: `Please login to ${action}.`,
+      status: 'warning',
+      duration: 5000,
+      isClosable: true,
+    });
+    navigate('/login');
+  };
+
   const handleToggleWishlist = async () => {
     try {
       if (!details) {
@@ -161,15 +172,20 @@ const MovieDetailsPage = () => {
         });
       }
     } catch (error) {
-      console.error('Error toggling wishlist:', error);
+      console.error('Wishlist error:', error);
       const message = error instanceof Error ? error.message : 'Failed to update wishlist';
-      toast({
-        title: 'Error',
-        description: message,
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+      
+      if (message === 'Authentication required') {
+        handleAuthError('add to wishlist');
+      } else {
+        toast({
+          title: 'Error',
+          description: message,
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
     }
   };
 
@@ -198,7 +214,7 @@ const MovieDetailsPage = () => {
           posterPath: details.poster_path
         }
       );
-
+      
       setDetails(prev => {
         if (!prev) return prev;
         return {
@@ -224,15 +240,20 @@ const MovieDetailsPage = () => {
         isClosable: true,
       });
     } catch (error) {
-      console.error('Error submitting review:', error);
+      console.error('Review submission error:', error);
       const message = error instanceof Error ? error.message : 'Failed to submit review';
-      toast({
-        title: 'Error',
-        description: message,
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+      
+      if (message === 'Authentication required') {
+        handleAuthError('submit a review');
+      } else {
+        toast({
+          title: 'Error',
+          description: message,
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
     }
   };
 
