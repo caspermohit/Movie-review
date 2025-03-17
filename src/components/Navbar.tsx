@@ -30,7 +30,7 @@ const Navbar = () => {
       <Flex h={16} alignItems="center" justifyContent="space-between">
         <Box>
           <Link as={RouterLink} to="/" fontSize="xl" fontWeight="bold">
-            Movie Reviews
+            Entertainment Reviews
           </Link>
         </Box>
 

@@ -230,7 +230,7 @@ export const fetchAiringTodayTVShows = async (page: number = 1): Promise<MovieRe
 
 export const fetchLatestTVShows = async (page: number = 1): Promise<MovieResponse> => {
   const response = await axios.get<MovieResponse>(
-    `${TMDB_API_BASE_URL}/tv/latest?api_key=${TMDB_API_KEY}&page=${page}`
+    `${TMDB_API_BASE_URL}/tv/now_playing?api_key=${TMDB_API_KEY}&page=${page}`
   );
   return response.data;
 };
