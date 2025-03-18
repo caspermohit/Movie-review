@@ -34,6 +34,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// Root route - add this to verify the server is working
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'OK',
+    message: 'Movie Review API is running',
+    endpoints: [
+      '/api/auth/register',
+      '/api/auth/login',
+      '/api/reviews',
+      '/api/wishlist'
+    ]
+  });
+});
+
 // Authentication Routes
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -225,7 +239,7 @@ app.get('/api/health', (req, res) => {
 // Connect to MongoDB
 mongoose.connect(MONGODB_URI)
   .then(async () => {
-    console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB:', MONGODB_URI);
     
     // Drop existing indexes to avoid conflicts
     await Promise.all([
@@ -245,12 +259,29 @@ mongoose.connect(MONGODB_URI)
     ]);
 
     console.log('Indexes created successfully');
+    
+    // Start the server after DB connection is established
+    const server = app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📝 API Documentation available at: http://localhost:${PORT}`);
+      console.log(`🔒 CORS configured for origin: ${process.env.CORS_ORIGIN || 'https://entertainment-review.netlify.app'}`);
+      console.log(`🛣️ Available routes:`);
+      console.log(`   - POST /api/auth/register`);
+      console.log(`   - POST /api/auth/login`);
+      console.log(`   - GET /api/health`);
+      console.log(`   - GET/POST /api/reviews`);
+      console.log(`   - GET/POST/DELETE /api/wishlist`);
+    });
+    
+    // Handle graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM received, shutting down gracefully');
+      server.close(() => {
+        console.log('Process terminated');
+      });
+    });
   })
   .catch((error) => {
     console.error('MongoDB connection error:', error);
     process.exit(1);
-  });
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-}); 
+  }); 
