@@ -12,43 +12,77 @@ interface AuthResponse {
 }
 
 export const register = async (username: string, email: string, password: string): Promise<AuthResponse> => {
-  const response = await fetch(`${API_URL}/auth/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ username, email, password }),
-  });
+  try {
+    const response = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, email, password }),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to register');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to register');
+    }
+
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    return data;
+  } catch (error) {
+    console.error('Registration API error:', error);
+    
+    // Check if it's a network error (fetch will throw TypeError for network issues)
+    if (error instanceof TypeError) {
+      throw new Error('Network error: Unable to connect to the server. Please check your internet connection or try again later.');
+    }
+    
+    // Re-throw the original error if it's already an Error instance
+    if (error instanceof Error) {
+      throw error;
+    }
+    
+    // Fallback for unknown errors
+    throw new Error('An unexpected error occurred during registration');
   }
-
-  const data = await response.json();
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('user', JSON.stringify(data.user));
-  return data;
 };
 
 export const login = async (email: string, password: string): Promise<AuthResponse> => {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email, password }),
-  });
+  try {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to login');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to login');
+    }
+
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    return data;
+  } catch (error) {
+    console.error('Login API error:', error);
+    
+    // Check if it's a network error (fetch will throw TypeError for network issues)
+    if (error instanceof TypeError) {
+      throw new Error('Network error: Unable to connect to the server. Please check your internet connection or try again later.');
+    }
+    
+    // Re-throw the original error if it's already an Error instance
+    if (error instanceof Error) {
+      throw error;
+    }
+    
+    // Fallback for unknown errors
+    throw new Error('An unexpected error occurred during login');
   }
-
-  const data = await response.json();
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('user', JSON.stringify(data.user));
-  return data;
 };
 
 export const logout = () => {

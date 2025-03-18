@@ -54,11 +54,23 @@ const RegisterPage = () => {
       });
       navigate('/');
     } catch (error) {
+      console.error('Registration error:', error);
+      
+      let errorMessage = 'An error occurred';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // Check for network errors or 404s
+      if (errorMessage.includes('Network Error') || errorMessage.includes('404')) {
+        errorMessage = 'Cannot connect to server. The backend service might be down or still starting up. Please try again in a few minutes.';
+      }
+      
       toast({
         title: 'Registration failed',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: errorMessage,
         status: 'error',
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
     } finally {
