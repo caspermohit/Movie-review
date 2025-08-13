@@ -3,12 +3,14 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
+import path from 'path';
 import { Review } from './models/Review';
 import { Wishlist } from './models/Wishlist';
 import { User } from './models/User';
 import { auth } from './middleware/auth';
 
-dotenv.config();
+// Load environment variables from backend directory
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5001;
