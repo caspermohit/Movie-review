@@ -16,8 +16,20 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/movie-
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Middleware
+// Clean and validate CORS origin
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+console.log('Raw CORS_ORIGIN from env:', JSON.stringify(process.env.CORS_ORIGIN));
+console.log('corsOrigin variable:', JSON.stringify(corsOrigin));
+
+// Clean the CORS origin - remove extra protocols and trailing slashes
+let cleanCorsOrigin = corsOrigin.trim();
+cleanCorsOrigin = cleanCorsOrigin.replace(/^https?:\/\/http[s]?:\/\//, 'http://'); // Fix double protocol
+cleanCorsOrigin = cleanCorsOrigin.replace(/\/$/, ''); // Remove trailing slash
+
+console.log('Cleaned CORS Origin:', JSON.stringify(cleanCorsOrigin));
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'https://entertainment-review.netlify.app',
+  origin: cleanCorsOrigin,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
   credentials: true
